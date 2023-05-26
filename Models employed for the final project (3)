@@ -1,0 +1,138 @@
+import yfinance as yf
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+def black_scholes_call(S, K, r, sigma, T):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call_price
+
+def black_scholes_put(S, K, r, sigma, T):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    put_price = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+    return put_price
+
+# Obtener datos históricos del precio del petróleo usando yfinance
+stock_name = 'CL=F'
+start_date = '2023-01-05'
+end_date = '2023-03-05'
+data = yf.download(stock_name, start=start_date, end=end_date)
+
+# Extraer el precio de cierre ajustado del petróleo
+prices = data['Adj Close']
+spot_price = prices[-1]  # Precio más reciente
+
+# Parámetros para el modelo de Black-Scholes
+strike_price = spot_price  # Precio de ejercicio igual al precio spot
+risk_free_rate = 0.05  # Tasa libre de riesgo (por ejemplo, 5%)
+volatility = np.std(prices.pct_change()) * np.sqrt(252)  # Volatilidad anualizada
+
+# Calcular precios de opción de compra y opción de venta
+option_expiry = 1  # Tiempo de vencimiento de la opción en años
+call_price = black_scholes_call(spot_price, strike_price, risk_free_rate, volatility, option_expiry)
+put_price = black_scholes_put(spot_price, strike_price, risk_free_rate, volatility, option_expiry)
+
+# Mostrar resultados
+print(f"Precio de la opción de compra: {call_price}")
+print(f"Precio de la opción de venta: {put_price}")
+
+# Revisión de la robustez del modelo
+
+# 1. Sensibilidad a los cambios en los parámetros
+spot_price_change = 0.1 * spot_price  # Cambio del 10% en el precio spot
+volatility_change = 0.1 * volatility  # Cambio del 10% en la volatilidad
+call_price_change_spot = black_scholes_call(spot_price + spot_price_change, strike_price, risk_free_rate, volatility, option_expiry)
+call_price_change_volatility = black_scholes_call(spot_price, strike_price, risk_free_rate, volatility + volatility_change, option_expiry)
+
+print("Sensibilidad a los cambios en los parámetros:")
+print(f"Cambio del 10% en el precio spot: {call_price_change_spot - call_price}")
+print(f"Cambio del 10% en la volatilidad: {call_price_change_volatility - call_price}")
+
+# 2. Comparación con precios de mercado
+# Aquí se asume que tienes los precios reales de las opciones en el mercado para compararlos con los precios calculados.
+
+# 3. Backtesting
+# En este caso, se utiliza el período histórico de datos de precios para evaluar la precisión del modelo.
+
+# 4. Análisis de sensibilidad a la volatilidad implícita
+implied_volatility = 0.2  # Volatilidad implícita asumida
+call_price_change_volatility_impl = black_scholes_call(spot_price, strike_price, risk_free_rate, implied_volatility, option_expiry)
+print("Sensibilidad a la volatilidad implícita:")
+print(f"Cambio en la volatilidad implícita: {call_price_change_volatility_impl - call_price}")
+
+# 5. Prueba de hipótesis estadísticas
+# Se pueden realizar pruebas estadísticas para evaluar si los errores entre los precios calculados y los precios de mercado siguen una distribución normal o si hay algún sesgo sistemático.
+
+# Crear gráfico para demostrar la robustez del modelo
+spot_range = np.linspace(0.8 * spot_price, 1.2 * spot_price, 100)
+call_prices = black_scholes_call(spot_range, strike_price, risk_free_rate, volatility, option_expiry)
+put_prices = black_scholes_put(spot_range, strike_price, risk_free_rate, volatility, option_expiry)
+
+plt.figure(figsize=(10, 6))
+plt.plot(spot_range, call_prices, label='Opción de compra')
+plt.plot(spot_range, put_prices, label='Opción de venta')
+plt.axvline(x=spot_price, color='r', linestyle='--', label='Precio spot')
+plt.xlabel('Precio del subyacente')
+plt.ylabel('Precio de la opción')
+plt.title('Modelo de Black-Scholes: Opción de compra y opción de venta')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+import yfinance as yf
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# Definir los parámetros
+simbolo = 'CL=F'  # Símbolo para futuros de petróleo crudo
+fecha_inicio = '2022-01-01'
+fecha_fin = '2022-12-31'
+tasa_libre_riesgo = 0.05
+dias_vencimiento = 30
+
+# Descargar los datos históricos
+datos_petroleo = yf.download(simbolo, start=fecha_inicio, end=fecha_fin)
+precios_petroleo = datos_petroleo['Adj Close'].values
+
+# Verificar si los precios del petróleo contienen datos válidos
+if len(precios_petroleo) == 0:
+    print("No hay datos históricos disponibles para el símbolo y rango de fechas especificados.")
+else:
+    # Calcular los precios de las opciones usando la fórmula de Black-Scholes
+    S = precios_petroleo[-1]  # Precio actual
+    r = tasa_libre_riesgo  # Tasa libre de riesgo
+    T = dias_vencimiento / 365  # Tiempo hasta el vencimiento en años
+    sigma = 0.2  # Valor provisional para la volatilidad (reemplazar con el valor real)
+
+    d1 = (np.log(S / S) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    precio_call = S * norm.cdf(d1) - np.exp(-r * T) * norm.cdf(d2)
+    precio_put = np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+
+    # Graficar los datos históricos
+    fechas = datos_petroleo.index
+    plt.figure(figsize=(10, 6))
+    plt.plot(fechas, precios_petroleo, label='Precio del Petróleo Crudo')
+    plt.axhline(y=S, color='r', linestyle='--', label='Precio Actual')
+    plt.xlabel('Fecha')
+    plt.ylabel('Precio')
+    plt.title('Precio del Petróleo Crudo')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Mostrar los precios calculados de las opciones
+    print("Precio de la Opción de Compra (Call):", precio_call)
+    print("Precio de la Opción de Venta (Put):", precio_put)
+
+
+
