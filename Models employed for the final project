@@ -1,0 +1,91 @@
+SIMULACIONES CORRESPONDIENTES A FIGURAS 1 Y 2
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# Parámetros
+num_steps = 1000  # Número de pasos de tiempo
+dt = 0.1  # Incremento de tiempo
+diffusion_coefficient = 0.5  # Coeficiente de difusión
+
+# Inicialización de variables
+x = np.zeros(num_steps)  # Posición en el eje x
+y = np.zeros(num_steps)  # Posición en el eje y
+z = np.zeros(num_steps)  # Posición en el eje z
+
+# Simulación del movimiento browniano
+for i in range(1, num_steps):
+    dx = np.random.normal(0, np.sqrt(2 * diffusion_coefficient * dt))  # Incremento en x
+    dy = np.random.normal(0, np.sqrt(2 * diffusion_coefficient * dt))  # Incremento en y
+    dz = np.random.normal(0, np.sqrt(2 * diffusion_coefficient * dt))  # Incremento en z
+    x[i] = x[i-1] + dx  # Nueva posición en x
+    y[i] = y[i-1] + dy  # Nueva posición en y
+    z[i] = z[i-1] + dz  # Nueva posición en z
+
+# Gráfica del movimiento browniano en 3D
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.plot(x, y, z, 'b-')
+ax.scatter(x[0], y[0], z[0], c='r', label='Inicio')  # Punto inicial en rojo
+ax.scatter(x[-1], y[-1], z[-1], c='g', label='Final')  # Punto final en verde
+ax.set_xlabel('Posición en x')
+ax.set_ylabel('Posición en y')
+ax.set_zlabel('Posición en z')
+ax.set_title('Movimiento Browniano en un fluido')
+ax.legend()
+plt.grid(True)
+plt.show()
+
+Grafica MBG: 
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parámetros
+T = 1.0     # Horizonte temporal
+N = 1000    # Número de pasos
+mu = 0.1    # Rendimiento esperado
+sigma = 0.2 # Volatilidad
+scen_size = 100  # Número de trayectorias
+
+# Generar los incrementos aleatorios para todas las trayectorias
+dt = T / N
+t = np.linspace(0.0, T, N+1)
+dB = np.sqrt(dt) * np.random.randn(scen_size, N)
+
+# Calcular las trayectorias del movimiento browniano geométrico
+S = np.zeros((scen_size, N+1))
+S[:, 0] = 1.0  # Valor inicial para todas las trayectorias
+for i in range(1, N+1):
+    drift = mu * S[:, i-1] * dt
+    diffusion = sigma * S[:, i-1] * dB[:, i-1]
+    S[:, i] = S[:, i-1] + drift + diffusion
+
+# Calcular el promedio y desviación estándar de todas las trayectorias
+avg_S = np.mean(S, axis=0)
+std_S = np.std(S, axis=0)
+
+# Encontrar la trayectoria más probable (promedio)
+most_probable_index = np.argmax(avg_S)
+if most_probable_index >= scen_size:
+    most_probable_index = scen_size - 1
+most_probable_path = S[most_probable_index]
+
+# Graficar todas las trayectorias y resaltar la más probable en rojo
+plt.figure(figsize=(10, 6))
+for i in range(scen_size):
+    if i == most_probable_index:
+        plt.plot(t, S[i, :], color='red', linewidth=1, alpha=0.8)
+    else:
+        plt.plot(t, S[i, :], color='gray', linewidth=0.5, alpha=0.2)
+
+plt.plot(t, most_probable_path, color='red', linewidth=2, label='Trayectoria más probable')
+plt.xlabel('Tiempo')
+plt.ylabel('Precio')
+plt.title('Movimiento Browniano Geométrico - 100 Trayectorias')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
